@@ -1,4 +1,5 @@
 using Assets.Scripts.ScenarioSystem.Nodes;
+using Assets.unity_plot_editor.Nodes.Abstractions;
 using System;
 using System.Collections.Generic;
 using UnityEditor;
@@ -38,15 +39,15 @@ public class PlotTree : ScriptableObject
         AssetDatabase.SaveAssets();
     }
 
-    public void AddChild(PlotNode parent, PlotNode child)
+    public void AddChild(INormalNode parent, INormalNode child)
     {
         parent.AddChild(child);
     }
 
-    public void RemoveChild(PlotNode parent, PlotNode child)
+    public void RemoveChild(INormalNode parent, INormalNode child)
     {
         parent.RemoveChild(child);
     }
 
-    public List<PlotNode> GetChildren(PlotNode parent) => parent.ChildNodes;
+    public List<INormalNode> GetChildren(INormalNode parent) => parent.ChildNodes;
 }

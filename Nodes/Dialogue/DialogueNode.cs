@@ -1,50 +1,51 @@
 using Assets.Scripts.ScenarioSystem.Nodes;
+using Assets.unity_plot_editor.Nodes.Abstractions;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DialogueNode : PlotNode, ILogicNode
+public class DialogueNode : PlotNode, INormalNode, ILogicNode
 {
-    // диалог
+    // dialogue
     public bool IsRepeats { get; set; }
-    public override List<PlotNode> ChildNodes { get => childNodes; set => childNodes = value; }
-    public List<PlotNode> NextNodes
+    public OptionNode StartNode { get; set; }
+    public HashSet<string> Authors { get; set; }
+    public HashSet<OptionNode> Options { get; set; }
+
+    // normal
+    public List<INormalNode> ChildNodes { get; set; }
+    public List<INormalNode> NextNodes
     {
         get
         {
             if (IsRepeats)
             {
-                var nodes = new List<PlotNode>(childNodes);
+                var nodes = new List<INormalNode>(ChildNodes);
                 nodes.Add(this);
                 return nodes;
             }
-            return childNodes;
+            return ChildNodes;
         }
         set
         {
-            childNodes = value;
+            ChildNodes = value;
         }
     }
-    public HashSet<string> Authors { get; set; }
-    public List<OptionNode> Options { get; set; }
-    public OptionNode StartNode { get; set; }
 
 
-    private List<PlotNode> childNodes;
-
-
-    // логика
+    // logic
     public bool FromData { get; set; }
     public ILogicNode LogicNode { get; set; }
+    public string Guid => guid;
 
 
     public DialogueNode()
     {
-        childNodes = new List<PlotNode>();
+        ChildNodes = new List<INormalNode>();
         Authors = new HashSet<string>();
         IsRepeats = false;
 
-        Options = new List<OptionNode>();
+        Options = new HashSet<OptionNode>();
     }
 
     public void AddMessage(OptionNode parent, OptionNode child)
@@ -52,7 +53,7 @@ public class DialogueNode : PlotNode, ILogicNode
         parent.AddChild(child);
         if (parent.ChildNodes.Count > 1)
         {
-            Options.Add(child);
+            Options.Add(parent);
         }
     }
 
@@ -61,7 +62,7 @@ public class DialogueNode : PlotNode, ILogicNode
         parent.RemoveChild(child);
         if (parent.ChildNodes.Count <= 1)
         {
-            Options.Remove(child);
+            Options.Remove(parent);
         }
     }
 
@@ -71,8 +72,8 @@ public class DialogueNode : PlotNode, ILogicNode
 
     public bool GetLogic() => LogicNode != null ? LogicNode.FromData : true;
 
-    public override void AddChild(PlotNode node) => childNodes.Add(node);
+    public void AddChild(INormalNode node) => ChildNodes.Add(node);
 
-    public override void RemoveChild(PlotNode node) => childNodes.Remove(node);
+    public void RemoveChild(INormalNode node) => ChildNodes.Remove(node);
     
 }

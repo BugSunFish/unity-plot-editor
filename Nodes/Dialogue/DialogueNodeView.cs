@@ -1,17 +1,25 @@
-﻿using UnityEditor.Experimental.GraphView;
+﻿using Assets.Scripts.ScenarioSystem.Nodes.Option;
+using Assets.unity_plot_editor.Nodes.Abstractions;
+using Assets.unity_plot_editor.Nodes.Abstractions.Ports;
+using System;
+using System.Collections.Generic;
+using System.Security.Policy;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Assets.Scripts.ScenarioSystem.Nodes.Dialogue
 {
-    public class DialogueNodeView : PlotNodeView, ILogicNodeView
+    public class DialogueNodeView : PlotNodeView, INormalNodeView, ILogicNodeView
     {
-        public ILogicNode AsLogicNode { get => node as ILogicNode; }
         public DialogueNode Node { get => node as DialogueNode; }
+        public HashSet<OptionNodeView> OptionViews { get; set; }
 
-        public Port InputLogic { get; set; }
-        public Port OutputLogic { get; set; }
+        public NormalPort InputNormal { get; set; }
+        public NormalPort OutputNormal { get; set; }
 
+        public LogicPort InputLogic { get; set; }
+        public LogicPort OutputLogic { get; set; }
 
         public TemplateContainer genInputContainer;
         public TemplateContainer genOutputContainer;
@@ -28,8 +36,10 @@ namespace Assets.Scripts.ScenarioSystem.Nodes.Dialogue
             genInputContainer = new TemplateContainer();
             genOutputContainer = new TemplateContainer();
 
-            CreateInputPorts();
-            CreateOutputPorts();
+            OptionViews = new HashSet<OptionNodeView>();
+
+            CreateInputNormalPort();
+            CreateOutputNormalPort();
 
             CreateInputLogicPort();
             CreateOutputLogicPort();
@@ -42,33 +52,30 @@ namespace Assets.Scripts.ScenarioSystem.Nodes.Dialogue
             CreateOptions();
         }
 
-        public void CreateInputPorts()
+        public void CreateInputNormalPort()
         {
-            Input = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(bool));
+            InputNormal = NormalPort.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(bool));
 
-            Input.name = "NormalPort";
-            Input.portName = "";
-            Input.portColor = Color.white;
+            InputNormal.portName = "";
+            InputNormal.portColor = Color.white;
 
-            genInputContainer.Add(Input);
+            genInputContainer.Add(InputNormal);
         }
 
-        public void CreateOutputPorts()
+        public void CreateOutputNormalPort()
         {
-            Output = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(bool));
+            OutputNormal = NormalPort.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(bool));
 
-            Output.name = "NormalPort";
-            Output.portName = "";
-            Output.portColor = Color.white;
+            OutputNormal.portName = "";
+            OutputNormal.portColor = Color.white;
 
-            genOutputContainer.Add(Output);
+            genOutputContainer.Add(OutputNormal);
         }
 
         public void CreateInputLogicPort()
         {
-            InputLogic = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(bool));
+            InputLogic = LogicPort.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(bool));
 
-            InputLogic.name = "LogicPort";
             InputLogic.portName = "";
             InputLogic.portColor = new Color(1, 0.5f, 0);
 
@@ -77,9 +84,9 @@ namespace Assets.Scripts.ScenarioSystem.Nodes.Dialogue
 
         public void CreateOutputLogicPort()
         {
-            OutputLogic = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(bool));
+            OutputLogic = LogicPort.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(bool));
 
-            OutputLogic.name = "LogicPort";
+
             OutputLogic.portName = "";
             OutputLogic.portColor = new Color(1, 0.5f, 0);
 
@@ -106,8 +113,34 @@ namespace Assets.Scripts.ScenarioSystem.Nodes.Dialogue
         {
             foreach (var option in Node.Options)
             {
-                contentContainer.Add(new Option.OptionNodeView(option).container);
+                foreach (var childOption in option.ChildNodes)
+                {
+                    if (childOption is OptionNode)
+                    {
+                        var optionView = new OptionNodeView(childOption as OptionNode);
+                        contentContainer.Add(optionView.container);
+                        OptionViews.Add(optionView);
+                    }
+                }
             }
+        }
+
+        public Port GetPortByGuid(Guid guid)
+        {
+
+            if (InputNormal.Guid == guid)
+                return InputNormal;
+
+            if (OutputNormal.Guid == guid)
+                return OutputNormal;
+
+            foreach (var optionView in OptionViews)
+            {
+                if (optionView.GetPortByGuid(guid) is Port port)
+                    return port;
+            }
+
+            return null;
         }
 
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
@@ -122,7 +155,17 @@ namespace Assets.Scripts.ScenarioSystem.Nodes.Dialogue
                     $"Logic:\t{(Node.LogicNode != null ? "Connnect" : " ")}\n" +
                     "");
             });
-        }
+            evt.menu.AppendAction($"Add Test Options Structure", (a) =>
+            {
+                OptionNode optionStart = new OptionNode("N1", null, "Hello!");
+                OptionNode option0 = new OptionNode("P1", "Hello", "Hello!");
+                OptionNode option1 = new OptionNode("P1", "Bye", "Bye!");
 
+                Node.StartNode = optionStart;
+                Node.AddMessage(optionStart, option0);
+                Node.AddMessage(optionStart, option1);
+
+            });
+        }
     }
 }

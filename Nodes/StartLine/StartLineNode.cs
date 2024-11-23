@@ -1,19 +1,20 @@
 using Assets.Scripts.ScenarioSystem.Nodes;
+using Assets.unity_plot_editor.Nodes.Abstractions;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class StartLineNode : PlotNode
+public class StartLineNode : PlotNode, INormalNode
 {
     // линия диалога
-    public override List<PlotNode> ChildNodes { get; set; }
+    public List<INormalNode> ChildNodes { get; set; }
 
     public StartLineNode()
     {
-        ChildNodes = new List<PlotNode>();
+        ChildNodes = new List<INormalNode>();
     }
 
-    public override void AddChild(PlotNode node) => ChildNodes.Add(node);
+    public void AddChild(INormalNode node) => ChildNodes.Add(node);
 
-    public override void RemoveChild(PlotNode node) => ChildNodes.Remove(node);
+    public void RemoveChild(INormalNode node) => ChildNodes.Remove(node);
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.unity_plot_editor.Nodes.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,22 +9,28 @@ using UnityEngine.UIElements;
 
 namespace Assets.Scripts.ScenarioSystem.Nodes
 {
-    public class OptionNode : PlotNode, ILogicNode
+    public class OptionNode : PlotNode, INormalNode, ILogicNode
     {
-        // сообщения
+        // message
         public string Title { get; set; }
         public string Author { get; set; }
         public string Message { get; set; }
-        public override List<PlotNode> ChildNodes { get; set; }
-        
 
-        // логика
+        // normal
+        public List<INormalNode> ChildNodes { get; set; }
+
+        // logic
         public bool FromData { get; set; } // isActive
         public ILogicNode LogicNode { get; set; } // wasActive
+        public string Guid => guid;
 
-        public OptionNode(string title)
+
+        public OptionNode(string author, string title, string message)
         {
+            Author = author;
             Title = title;
+            Message = message;
+            ChildNodes = new List<INormalNode>();
         }
 
         public void SetLogic(ILogicNode logicNode) => LogicNode = logicNode;
@@ -32,9 +39,9 @@ namespace Assets.Scripts.ScenarioSystem.Nodes
 
         public bool GetLogic() => LogicNode != null ? LogicNode.FromData : true;
 
-        public override void AddChild(PlotNode node) => ChildNodes.Add(node);
+        public void AddChild(INormalNode node) => ChildNodes.Add(node);
 
-        public override void RemoveChild(PlotNode node) => ChildNodes.Remove(node);
+        public void RemoveChild(INormalNode node) => ChildNodes.Remove(node);
 
     }
 }

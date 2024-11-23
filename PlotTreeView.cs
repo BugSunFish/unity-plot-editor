@@ -1,16 +1,15 @@
-using Assets.Scripts.ScenarioSystem.Nodes;
 using Assets.Scripts.ScenarioSystem.Nodes.Dialogue;
+using Assets.unity_plot_editor.Nodes.Abstractions;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Edge = UnityEditor.Experimental.GraphView.Edge;
 
 public class PlotTreeView : GraphView
 {
-    public new class UxmlFactory : UxmlFactory<PlotTreeView, GraphView.UxmlTraits> { }
+    public new class UxmlFactory : UxmlFactory<PlotTreeView, UxmlTraits> { }
     public PlotTree tree;
 
     public PlotTreeView()
@@ -45,27 +44,44 @@ public class PlotTreeView : GraphView
 
             PlotNodeView parentView = FindScenarioNodeView(n);
 
-            if (parentView is PlotNodeView)
+            if (parentView is INormalNodeView)
             {
-                foreach (var c in tree.GetChildren(n))
+                foreach (var c in tree.GetChildren(parentView.node as INormalNode))
                 {
-                    PlotNodeView childView = FindScenarioNodeView(c);
+                    PlotNodeView childView = FindScenarioNodeView(c as PlotNode);
 
-                    Edge edge = parentView?.Output.ConnectTo(childView?.Input);
+                    //Edge edge = parentView?.Output.ConnectTo(childView?.Input);
 
-                    AddElement(edge);
+                    //AddElement(edge);
                 }
             }
 
-            if (parentView is ILogicNodeView logicNodeChildView && logicNodeChildView.AsLogicNode.LogicNode != null)
-            {
+            //if (parentView is ILogicNodeView logicNodeChildView && logicNodeChildView.AsLogicNode.LogicNode != null)
+            //{
 
-                var logicNodeParentView = FindScenarioNodeView(logicNodeChildView.AsLogicNode.LogicNode as PlotNode) as ILogicNodeView;
+            //    var logicNodeParentView = FindScenarioNodeView(logicNodeChildView.AsLogicNode.LogicNode as PlotNode) as ILogicNodeView;
 
-                Edge edge = logicNodeParentView.OutputLogic.ConnectTo(logicNodeChildView.InputLogic);
+            //    Edge edge = logicNodeParentView.OutputLogic.ConnectTo(logicNodeChildView.InputLogic);
 
-                AddElement(edge);
-            }
+            //    AddElement(edge);
+
+            //    /*
+            //     * сомнительный функционал, соединяет ноды неправильно
+            //     * 
+            //    if (logicNodeChildView is DialogueNodeView dialogueNodeView)
+            //    {
+            //        foreach (ILogicNode optionNodeView in dialogueNodeView.OptionViews)
+            //        {
+            //            var optionLogicNodeViewChild = FindLogicNodeView(optionNodeView);
+            //            var optionLogicNodeViewParent = FindLogicNodeView(optionNodeView.LogicNode);
+
+            //            Edge edgeOptions = optionLogicNodeViewParent.OutputLogic.ConnectTo(optionLogicNodeViewChild.InputLogic);
+
+            //            AddElement(edgeOptions);
+            //        }
+            //    }
+            //    */
+            //}
         });
     }
 
@@ -80,39 +96,39 @@ public class PlotTreeView : GraphView
     private GraphViewChange OnGraphViewChanged(GraphViewChange graphViewChange)
     {
 
-        //List<ScenarioNodeView> nodes = new List<ScenarioNodeView>();
-
         if (graphViewChange.elementsToRemove != null)
         {
             graphViewChange.elementsToRemove.ForEach(elem =>
             {
-                PlotNodeView nodeView = elem as PlotNodeView;
+                //PlotNodeView nodeView = elem as PlotNodeView;
 
-                if (nodeView != null)
-                {
-                    tree.DeleteNode(nodeView.node);
-                }
+                //if (nodeView != null)
+                //{
+                //    tree.DeleteNode(nodeView.node);
+                //}
 
-                Edge edge = elem as Edge;
+                //Edge edge = elem as Edge;
 
-                if (edge != null)
-                {
-                    PlotNodeView parentView = edge.output.node as PlotNodeView;
-                    PlotNodeView childView = edge.input.node as PlotNodeView;
+                //if (edge != null)
+                //{
+                //    PlotNodeView parentView = edge.output.node as PlotNodeView;
+                //    PlotNodeView childView = edge.input.node as PlotNodeView;
 
-                    if (edge.input.name == "LogicPort")
-                    {
-                        if (parentView.node is ILogicNode parent && childView.node is ILogicNode child)
-                        {
-                            child.ClearLogic();
-                        }
-                    }
-                    else if (edge.input.name == "NormalPort")
-                    {
-                        tree.RemoveChild(parentView.node, childView.node);
-                    }
+                //    // какая та проблема именно с соедиеннием
 
-                }
+                //    if (edge.input.name == "LogicPort")
+                //    {
+                //        if (parentView.node is ILogicNode parent && childView.node is ILogicNode child)
+                //        {
+                //            child.ClearLogic();
+                //        }
+                //    }
+                //    else if (edge.input.name == "NormalPort")
+                //    {
+                //        tree.RemoveChild(parentView.node, childView.node);
+                //    }
+
+                //}
 
             });
         }
@@ -121,20 +137,19 @@ public class PlotTreeView : GraphView
         {
             graphViewChange.edgesToCreate.ForEach(edge =>
             {
-                PlotNodeView parentView = edge.output.node as PlotNodeView;
-                PlotNodeView childView = edge.input.node as PlotNodeView;
+                //if (edge.input.name == typeof(LogicPort).Name && edge.output.node is ILogicNodeView parentLogicView && edge.input.node is ILogicNodeView childLogicView)
+                //{
+                    
+                //    if (parentLogicView.AsLogicNode is ILogicNode parent && childLogicView.AsLogicNode is ILogicNode child)
+                //    {
 
-                if (edge.input.name == "LogicPort")
-                {
-                    if (parentView.node is ILogicNode parent && childView.node is ILogicNode child)
-                    {
-                        child.SetLogic(parent);
-                    }
-                }
-                else if (edge.input.name == "NormalPort")
-                {
-                    tree.AddChild(parentView.node, childView.node);
-                }
+                //    }
+                //    child.SetLogic(parent);
+                //}
+                //else if (edge.input.name == "NormalPort" && edge.output.node is PlotNodeView parentView && edge.input.node is PlotNodeView childView)
+                //{
+                //    tree.AddChild(parentView.node, childView.node);
+                //}
 
             });
         }
