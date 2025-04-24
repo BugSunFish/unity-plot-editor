@@ -1,3 +1,4 @@
+using Assets.Scripts.ScenarioSystem.Nodes;
 using Assets.Scripts.ScenarioSystem.Nodes.Dialogue;
 using Assets.unity_plot_editor.Nodes.Abstractions;
 using System.Collections.Generic;
