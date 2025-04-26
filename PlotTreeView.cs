@@ -1,6 +1,8 @@
 using Assets.Scripts.ScenarioSystem.Nodes;
 using Assets.Scripts.ScenarioSystem.Nodes.Dialogue;
 using Assets.unity_plot_editor.Nodes.Abstractions;
+using Assets.unity_plot_editor.Nodes.Abstractions.Ports;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -38,24 +40,41 @@ public class PlotTreeView : GraphView
         DeleteElements(graphElements);
         graphViewChanged += OnGraphViewChanged;
 
+        // Отрисовываем все ноды 
         tree.ScenarioNodes.ForEach(node => CreateNodeView(node));
 
+        // Отрисовываем все связи
         tree.ScenarioNodes.ForEach(n =>
         {
 
-            PlotNodeView parentView = FindScenarioNodeView(n);
+            PlotNodeView view = FindScenarioNodeView(n);
 
-            if (parentView is INormalNodeView)
+            // Отрисовываем главные нормальные эджи
+            if (view is INormalNodeView parentNormalView)
             {
-                foreach (var c in tree.GetChildren(parentView.node as INormalNode))
+                foreach (var childNormalNode in tree.GetChildren(view.node as INormalNode))
                 {
-                    PlotNodeView childView = FindScenarioNodeView(c as PlotNode);
+                    PlotNodeView childNormalView = FindScenarioNodeView(childNormalNode as PlotNode);
 
-                    //Edge edge = parentView?.Output.ConnectTo(childView?.Input);
+                    Edge edge = parentNormalView?.OutputNormal.ConnectTo((childNormalView as INormalNodeView)?.InputNormal);
 
-                    //AddElement(edge);
+                    AddElement(edge);
                 }
             }
+
+            // Отрисовываем главные логические эджи
+            if (view is ILogicNodeView parentLogicView)
+            {
+                var childLogicNode = (view.node as ILogicNode).LogicNode;
+
+                PlotNodeView childLogicView = FindScenarioNodeView(childLogicNode as PlotNode);
+
+                Edge edge = parentLogicView?.OutputLogic.ConnectTo((childLogicView as ILogicNodeView)?.InputLogic);
+
+                AddElement(edge);
+            }
+
+            ///////////////////
 
             //if (parentView is ILogicNodeView logicNodeChildView && logicNodeChildView.AsLogicNode.LogicNode != null)
             //{
@@ -101,12 +120,12 @@ public class PlotTreeView : GraphView
         {
             graphViewChange.elementsToRemove.ForEach(elem =>
             {
-                //PlotNodeView nodeView = elem as PlotNodeView;
+                PlotNodeView nodeView = elem as PlotNodeView;
 
-                //if (nodeView != null)
-                //{
-                //    tree.DeleteNode(nodeView.node);
-                //}
+                if (nodeView != null)
+                {
+                    tree.DeleteNode(nodeView.node);
+                }
 
                 //Edge edge = elem as Edge;
 
@@ -138,9 +157,15 @@ public class PlotTreeView : GraphView
         {
             graphViewChange.edgesToCreate.ForEach(edge =>
             {
+                // Создние нормального соединения
+                if (edge.input.name == "NormalPort" && edge.output.node is PlotNodeView parentView && edge.input.node is PlotNodeView childView)
+                {
+                    tree.AddChild(parentView.node as INormalNode, childView.node as INormalNode);
+                }
+
                 //if (edge.input.name == typeof(LogicPort).Name && edge.output.node is ILogicNodeView parentLogicView && edge.input.node is ILogicNodeView childLogicView)
                 //{
-                    
+
                 //    if (parentLogicView.AsLogicNode is ILogicNode parent && childLogicView.AsLogicNode is ILogicNode child)
                 //    {
 
