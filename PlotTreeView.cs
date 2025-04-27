@@ -158,10 +158,18 @@ public class PlotTreeView : GraphView
             graphViewChange.edgesToCreate.ForEach(edge =>
             {
                 // Создние нормального соединения
-                if (edge.input.name == "NormalPort" && edge.output.node is PlotNodeView parentView && edge.input.node is PlotNodeView childView)
+                if (edge.input.name == "NormalPort" && edge.output.node is PlotNodeView parentNormalView && edge.input.node is PlotNodeView childNormalView)
                 {
-                    tree.AddChild(parentView.node as INormalNode, childView.node as INormalNode);
+                    tree.AddChild(parentNormalView.node as INormalNode, childNormalView.node as INormalNode);
                 }
+
+                // Создние логического соединения
+                if (edge.input.name == "LogicPort" && edge.output.node is PlotNodeView parentLogicView && edge.input.node is PlotNodeView childLogicView)
+                {
+                    // tree.AddLogicChild(parentLogicView.node as ILogicNode, childLogicView.node as ILogicNode);
+                }
+
+                // А как соединять опшны?
 
                 //if (edge.input.name == typeof(LogicPort).Name && edge.output.node is ILogicNodeView parentLogicView && edge.input.node is ILogicNodeView childLogicView)
                 //{

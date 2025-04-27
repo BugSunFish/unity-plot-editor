@@ -39,8 +39,6 @@ public class PlotTree : ScriptableObject
         AssetDatabase.SaveAssets();
     }
 
-    // Тут по сути надо чтобы и для Logic было
-
     public void AddChild(INormalNode parent, INormalNode child)
     {
         parent.AddChild(child);
