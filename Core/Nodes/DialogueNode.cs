@@ -75,5 +75,5 @@ public class DialogueNode : PlotNode, INormalNode, ILogicNode
     public void AddChild(INormalNode node) => ChildNodes.Add(node);
 
     public void RemoveChild(INormalNode node) => ChildNodes.Remove(node);
-    
+
 }

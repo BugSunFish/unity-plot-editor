@@ -37,7 +37,7 @@ namespace Assets.Scripts.ScenarioSystem.Nodes.Option
             container.style.justifyContent = Justify.SpaceBetween;
 
             container.Add(InputLogic);
-            var label = new Label(Node.Title);
+            var label = new Label(Node.Title + " " + Node.Guid);
             label.style.color = Color.white;
             container.Add(label);
             container.Add(OutputLogic);
@@ -86,6 +86,36 @@ namespace Assets.Scripts.ScenarioSystem.Nodes.Option
 
             if (OutputLogic.Guid == guid)
                 return OutputLogic;
+
+            return null;
+        }
+
+        public ILogicNode GetLogicNodeByPortGuid(Guid guid)
+        {
+            Debug.Log(
+                "public ILogicNode GetLogicNodeByPortGuid(Guid guid)\n\n" +
+                $"guid: {guid}\n" +
+                $"InputLogic.Guid: {InputLogic.Guid}\n" +
+                $"OutputLogic.Guid: {OutputLogic.Guid}\n");
+
+            if (InputLogic.Guid == guid)
+                return Node;
+
+            if (OutputLogic.Guid == guid)
+                return Node;
+
+            return null;
+        }
+
+        public INormalNode GetNormalNodeByPortGuid(Guid guid)
+        {
+            return null;
+        }
+
+        public ILogicNode GetLogicNodeByNodeGuid(string guid)
+        {
+            if (node.guid == guid)
+                return Node;
 
             return null;
         }

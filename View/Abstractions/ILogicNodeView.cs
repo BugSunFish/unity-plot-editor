@@ -1,4 +1,6 @@
-﻿using Assets.unity_plot_editor.Nodes.Abstractions.Ports;
+﻿using Assets.Scripts.ScenarioSystem.Nodes.Dialogue;
+using Assets.unity_plot_editor.Nodes.Abstractions;
+using Assets.unity_plot_editor.Nodes.Abstractions.Ports;
 using System;
 using UnityEditor.Experimental.GraphView;
 
@@ -12,5 +14,7 @@ namespace Assets.Scripts.ScenarioSystem.Nodes
         public void CreateInputLogicPort();
         public void CreateOutputLogicPort();
         public Port GetPortByGuid(Guid guid);
+        public ILogicNode GetLogicNodeByPortGuid(Guid guid);
+        public ILogicNode GetLogicNodeByNodeGuid(string guid);
     }
 }

@@ -27,7 +27,7 @@ namespace Assets.Scripts.ScenarioSystem.Nodes.Dialogue
         public DialogueNodeView(DialogueNode dialogueNode)
         {
             node = dialogueNode;
-            title = "Dialogue";
+            title = "Dialogue " + node.guid;
             viewDataKey = node.guid;
 
             style.left = node.position.x;
@@ -143,20 +143,137 @@ namespace Assets.Scripts.ScenarioSystem.Nodes.Dialogue
             return null;
         }
 
+        public ILogicNode GetLogicNodeByPortGuid(Guid guid)
+        {
+            if (InputLogic.Guid == guid)
+                return Node;
+
+            if (OutputLogic.Guid == guid)
+                return Node;
+
+            foreach (var optionView in OptionViews)
+            {
+                if (optionView.GetLogicNodeByPortGuid(guid) is ILogicNode node)
+                    return node;
+            }
+
+            return null;
+        }
+
+        public INormalNode GetNormalNodeByPortGuid(Guid guid)
+        {
+            if (InputNormal.Guid == guid)
+                return Node;
+
+            if (OutputNormal.Guid == guid)
+                return Node;
+
+            foreach (var optionView in OptionViews)
+            {
+                if (optionView.GetNormalNodeByPortGuid(guid) is INormalNode node)
+                    return node;
+            }
+
+            return null;
+        }
+
+        public ILogicNodeView GetLogicNodeViewByNodeGuid(string guid)
+        {
+
+            Debug.Log(
+                $"Поиск логической ноды\n" +
+                $"guid {guid}"
+                );
+
+            if (node.guid == guid)
+                return this;
+
+            Debug.Log(
+                $"Я не логическая нода, ищем по опциям\n" +
+                $"this guid: {node.guid}"
+                );
+
+            foreach (var optionView in OptionViews)
+            {
+                if (optionView.Node.guid == guid)
+                {
+                    Debug.Log(
+                        $"Нашёл среди опций!\n" +
+                        $"guid: {guid}\t"
+                        );
+                    return optionView;
+                }
+            }
+
+            Debug.Log("Не нашёл среди опций(");
+
+            return null;
+        }
+
+        public ILogicNode GetLogicNodeByNodeGuid(string guid)
+        {
+
+            Debug.Log(
+                $"Поиск логической ноды\n" +
+                $"guid {guid}"
+                );
+
+            if (node.guid == guid)
+                return Node;
+
+            Debug.Log(
+                $"Я не логическая нода, ищем по опциям\n" +
+                $"this guid: {node.guid}"
+                );
+
+            foreach (var option in Node.Options)
+            {
+                if (option.guid == guid)
+                {
+                    Debug.Log(
+                        $"Нашёл среди опций!\n" +
+                        $"guid: {guid}\t" +
+                        $"view guid: {option.guid}"
+                        );
+                    return option;
+                }
+            }
+
+            Debug.Log("Не нашёл среди опций(");
+
+            return null;
+        }
+
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
             base.BuildContextualMenu(evt);
             evt.menu.AppendAction($"Info", (a) =>
             {
-                Debug.Log("" +
+                Debug.Log(
+                    $"Dialogue Node\n" +
+                    $"Guid:\t{Node.Guid}\n" +
+                    $"guid:\t{node.guid}\n" +
                     $"Child Nodes Count:\t{Node.ChildNodes.Count}\n" +
                     $"Authors Count:\t{Node.Authors.Count}\n" +
                     $"IsRepeat:\t{Node.IsRepeats}\n" +
                     $"Logic:\t{(Node.LogicNode != null ? "Connnect" : " ")}\n" +
                     "");
+
+                foreach (var optionView in OptionViews)
+                {
+                    Debug.Log(
+                        $"Option\n" +
+                        $"guid:\t{optionView.node.guid}\n" +
+                        $"message:\t{optionView.Node.Message}\n" +
+                        $"logic:\t{(optionView.Node.LogicNode != null ? "Connnect" : " ")}\n" +
+                        "");
+                }
             });
             evt.menu.AppendAction($"Add Test Options Structure", (a) =>
             {
+
+                // не использовать тк здесь не создаётся view для options
+
                 OptionNode optionStart = new OptionNode("N1", null, "Hello!");
                 OptionNode option0 = new OptionNode("P1", "Hello", "Hello!");
                 OptionNode option1 = new OptionNode("P1", "Bye", "Bye!");
@@ -164,8 +281,8 @@ namespace Assets.Scripts.ScenarioSystem.Nodes.Dialogue
                 Node.StartNode = optionStart;
                 Node.AddMessage(optionStart, option0);
                 Node.AddMessage(optionStart, option1);
-
             });
         }
+
     }
 }

@@ -12,5 +12,6 @@ namespace Assets.unity_plot_editor.Nodes.Abstractions
         public void CreateInputNormalPort();
         public void CreateOutputNormalPort();
         public Port GetPortByGuid(Guid guid);
+        public INormalNode GetNormalNodeByPortGuid(Guid guid);
     }
 }

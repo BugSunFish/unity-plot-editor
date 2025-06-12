@@ -47,6 +47,11 @@ namespace Assets.Scripts.ScenarioSystem.Nodes.Dialogue
             throw new NotImplementedException();
         }
 
+        public INormalNode GetNormalNodeByPortGuid(Guid guid)
+        {
+            throw new NotImplementedException();
+        }
+
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
             base.BuildContextualMenu(evt);

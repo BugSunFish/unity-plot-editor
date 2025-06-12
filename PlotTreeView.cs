@@ -1,5 +1,6 @@
 using Assets.Scripts.ScenarioSystem.Nodes;
 using Assets.Scripts.ScenarioSystem.Nodes.Dialogue;
+using Assets.Scripts.ScenarioSystem.Nodes.Option;
 using Assets.unity_plot_editor.Nodes.Abstractions;
 using Assets.unity_plot_editor.Nodes.Abstractions.Ports;
 using System;
@@ -30,7 +31,28 @@ public class PlotTreeView : GraphView
         tree = new PlotTree();
     }
 
-    public PlotNodeView FindScenarioNodeView(PlotNode node) => GetNodeByGuid(node.guid) as PlotNodeView;
+    public PlotNodeView FindScenarioNodeView(PlotNode node)
+    {
+        return GetNodeByGuid(node.guid) as PlotNodeView;
+    }
+
+    public ILogicNodeView FindLogicNodeViewByGuid(string guid)
+    {
+        return nodes.ToList()
+            .Where(x => (x as DialogueNodeView) != null)
+            .Select(x => (x as DialogueNodeView).GetLogicNodeViewByNodeGuid(guid))
+            .Where(x => x != null)
+            .FirstOrDefault();
+    }
+
+    public ILogicNode FindLogicNodeByGuid(string guid)
+    {
+        return nodes.ToList()
+            .Where(x => (x as DialogueNodeView) != null)
+            .Select(x => (x as ILogicNodeView).GetLogicNodeByNodeGuid(guid))
+            .Where(x => x != null)
+            .FirstOrDefault();
+    }
 
     public void DrawView(PlotTree tree)
     {
@@ -46,7 +68,6 @@ public class PlotTreeView : GraphView
         // Отрисовываем все связи
         tree.ScenarioNodes.ForEach(n =>
         {
-
             PlotNodeView view = FindScenarioNodeView(n);
 
             // Отрисовываем главные нормальные эджи
@@ -62,46 +83,98 @@ public class PlotTreeView : GraphView
                 }
             }
 
-            // Отрисовываем главные логические эджи
+            // Отрисовка логических связей
             if (view is ILogicNodeView parentLogicView)
             {
                 var childLogicNode = (view.node as ILogicNode).LogicNode;
 
-                PlotNodeView childLogicView = FindScenarioNodeView(childLogicNode as PlotNode);
+                Debug.Log(
+                        $"Поддержка логической связи\n" +
+                        $"child logic node: {childLogicNode != null}\n" +
+                        $"type: {childLogicNode?.GetType().Name}\n"
+                        );
 
-                Edge edge = parentLogicView?.OutputLogic.ConnectTo((childLogicView as ILogicNodeView)?.InputLogic);
+                if (childLogicNode != null)
+                {
+                    PlotNodeView childLogicView = FindLogicNodeViewByGuid((childLogicNode as PlotNode).guid) as PlotNodeView;
 
-                AddElement(edge);
+                    Debug.Log(
+                        $"Отрисовка логической связи\n" +
+                        $"parent: {parentLogicView != null}\n" +
+                        $"child: {childLogicView != null}\n" +
+                        $"parent guid: {(parentLogicView as PlotNodeView)?.node.guid}\n" +
+                        $"child guid: {childLogicView?.node.guid}\n"
+                        );
+
+                    Edge edge = (childLogicView as ILogicNodeView)?.OutputLogic.ConnectTo(parentLogicView?.InputLogic);
+
+                    if (edge != null)
+                    {
+                        Debug.Log(
+                            $"Отрисовка логической связи прошла успешно\n" +
+                            $"parent guid: {(parentLogicView as PlotNodeView).node.guid}\n" +
+                            $"child guid: {childLogicView.node.guid}\n"
+                            );
+                    }
+
+                    AddElement(edge);
+                }
+
+                if (view is DialogueNodeView dialogueNodeView)
+                {
+                    Debug.Log(
+                        $"Отрисовка логических option связей DialogueNode\n" +
+                        $"parent guid: {(parentLogicView as PlotNodeView).node.guid}\n" +
+                        $"options count: {dialogueNodeView.OptionViews.Count}"
+                        );
+
+                    foreach (var optionView in dialogueNodeView.OptionViews)
+                    {
+                        Debug.Log(
+                            $"children option:\n" +
+                            $"guid: {optionView.Node.Guid}\n"
+                            );
+
+                        var parentLogicOptionNode = optionView.Node.LogicNode;
+                        
+                        if (parentLogicOptionNode != null)
+                        {
+                            Debug.Log("Найдена связь");
+
+                            ILogicNodeView parentLogicOptionView = FindLogicNodeViewByGuid((parentLogicOptionNode as PlotNode).guid);
+                            Debug.Log(
+                                $"parent option:\n" +
+                                $"guid: {(parentLogicOptionNode as PlotNode)?.guid}\n" +
+                                $"view: {(parentLogicOptionView != null ? "Найден" : "Не найден")} \n"
+                                );
+
+                            ILogicNodeView childLogicOptionView = optionView;
+
+                            Debug.Log(
+                                $"Отрисовка логической связи\n" +
+                                $"parent: {parentLogicView != null}\n" +
+                                $"child: {childLogicOptionView != null}\n" +
+                                $"parent guid: {(parentLogicView as PlotNodeView)?.node.guid}\n" +
+                                $"child guid: {(childLogicOptionView as PlotNodeView).node.guid}\n"
+                                );
+
+                            Edge edge = parentLogicOptionView?.OutputLogic.ConnectTo(childLogicOptionView?.InputLogic);
+
+                            if (edge != null)
+                            {
+                                Debug.Log("Отрисовка логической option связи прошла успешно");
+                            }
+
+                            AddElement(edge);
+                        }
+                        else
+                        {
+                            Debug.Log("Логическая связь option.LogicNode равна null");
+                        }
+                    }
+                }
             }
 
-            ///////////////////
-
-            //if (parentView is ILogicNodeView logicNodeChildView && logicNodeChildView.AsLogicNode.LogicNode != null)
-            //{
-
-            //    var logicNodeParentView = FindScenarioNodeView(logicNodeChildView.AsLogicNode.LogicNode as PlotNode) as ILogicNodeView;
-
-            //    Edge edge = logicNodeParentView.OutputLogic.ConnectTo(logicNodeChildView.InputLogic);
-
-            //    AddElement(edge);
-
-            //    /*
-            //     * сомнительный функционал, соединяет ноды неправильно
-            //     * 
-            //    if (logicNodeChildView is DialogueNodeView dialogueNodeView)
-            //    {
-            //        foreach (ILogicNode optionNodeView in dialogueNodeView.OptionViews)
-            //        {
-            //            var optionLogicNodeViewChild = FindLogicNodeView(optionNodeView);
-            //            var optionLogicNodeViewParent = FindLogicNodeView(optionNodeView.LogicNode);
-
-            //            Edge edgeOptions = optionLogicNodeViewParent.OutputLogic.ConnectTo(optionLogicNodeViewChild.InputLogic);
-
-            //            AddElement(edgeOptions);
-            //        }
-            //    }
-            //    */
-            //}
         });
     }
 
@@ -120,6 +193,9 @@ public class PlotTreeView : GraphView
         {
             graphViewChange.elementsToRemove.ForEach(elem =>
             {
+
+                // TODO: Добавить потом удаление привязанных эджей
+
                 PlotNodeView nodeView = elem as PlotNodeView;
 
                 if (nodeView != null)
@@ -127,28 +203,27 @@ public class PlotTreeView : GraphView
                     tree.DeleteNode(nodeView.node);
                 }
 
-                //Edge edge = elem as Edge;
+                Edge edge = elem as Edge;
 
-                //if (edge != null)
-                //{
-                //    PlotNodeView parentView = edge.output.node as PlotNodeView;
-                //    PlotNodeView childView = edge.input.node as PlotNodeView;
+                if (edge != null)
+                {
+                    PlotNodeView parentView = edge.output.node as PlotNodeView;
+                    PlotNodeView childView = edge.input.node as PlotNodeView;
 
-                //    // какая та проблема именно с соедиеннием
+                    if (edge.input.name == "LogicPort")
+                    {
+                        if (childView.node is ILogicNode child)
+                        {
+                            child.ClearLogic();
+                        }
+                    }
 
-                //    if (edge.input.name == "LogicPort")
-                //    {
-                //        if (parentView.node is ILogicNode parent && childView.node is ILogicNode child)
-                //        {
-                //            child.ClearLogic();
-                //        }
-                //    }
-                //    else if (edge.input.name == "NormalPort")
-                //    {
-                //        tree.RemoveChild(parentView.node, childView.node);
-                //    }
+                    if (edge.input.name == "NormalPort")
+                    {
+                        tree.RemoveChild(parentView.node as INormalNode, childView.node as INormalNode);
+                    }
 
-                //}
+                }
 
             });
         }
@@ -157,16 +232,47 @@ public class PlotTreeView : GraphView
         {
             graphViewChange.edgesToCreate.ForEach(edge =>
             {
+
+                /* INFO:
+                 На вход мы получаем edge с портами для связи которые можем понимать как наши порты с ID
+                 */
+
                 // Создние нормального соединения
                 if (edge.input.name == "NormalPort" && edge.output.node is PlotNodeView parentNormalView && edge.input.node is PlotNodeView childNormalView)
                 {
-                    tree.AddChild(parentNormalView.node as INormalNode, childNormalView.node as INormalNode);
+                    var parentNode = (parentNormalView as INormalNodeView).GetNormalNodeByPortGuid((edge.output as NormalPort).Guid);
+                    var childNode = (childNormalView as INormalNodeView).GetNormalNodeByPortGuid((edge.input as NormalPort).Guid);
+
+                    Debug.Log(
+                        $"Поиск нод по портам для нормальной связи\n" +
+                        $"parent: {parentNode}\t" +
+                        $"child: {childNode}\n"
+                        );
+
+                    tree.AddChild(parentNode, childNode);
+                    Debug.Log(
+                        $"Добавлена нормальная связь\n" +
+                        $"Детей: {parentNormalView.childCount}\n"
+                        );
                 }
 
                 // Создние логического соединения
                 if (edge.input.name == "LogicPort" && edge.output.node is PlotNodeView parentLogicView && edge.input.node is PlotNodeView childLogicView)
                 {
-                    // tree.AddLogicChild(parentLogicView.node as ILogicNode, childLogicView.node as ILogicNode);
+                    var parentNode = (parentLogicView as ILogicNodeView).GetLogicNodeByPortGuid((edge.output as LogicPort).Guid);
+                    var childNode = (childLogicView as ILogicNodeView).GetLogicNodeByPortGuid((edge.input as LogicPort).Guid);
+
+                    Debug.Log(
+                        $"Поиск нод по портам для логической связи\n" +
+                        $"parent: {parentNode.GetType().Name}\t" +
+                        $"child: {childNode.GetType().Name}\n"
+                        );
+
+                    tree.AddChild(parentNode, childNode);
+                    Debug.Log(
+                        $"Добавлена логическая связь\n" +
+                        $"Соединение: {childNode.LogicNode != null}\n"
+                        );
                 }
 
                 // А как соединять опшны?
@@ -194,14 +300,15 @@ public class PlotTreeView : GraphView
     public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
     {
         evt.menu.AppendAction($"Dialogue Node", (a) => CreateDialogueNode());
+        evt.menu.AppendAction($"Dialogue Node With Options", (a) => CreateDialogueNodeWithOptions());
         evt.menu.AppendAction($"StartLine Node", (a) => CreateStartLineNode());
 
         evt.menu.AppendAction($"Info", (a) =>
         {
-            Debug.Log("" +
+            Debug.Log(
                     $"ScenarioNodes Count:\t{tree.ScenarioNodes.Count}\n" +
-                    $"ScenarioRootNodes Count:\t{tree.ScenarioRootNodes.Count}\n" +
-                    "");
+                    $"ScenarioRootNodes Count:\t{tree.ScenarioRootNodes.Count}\n"
+                    );
         });
     }
 
@@ -209,6 +316,24 @@ public class PlotTreeView : GraphView
     {
         DialogueNode node = tree.CreateNode(typeof(DialogueNode)) as DialogueNode;
         CreateNodeView(node);
+    }
+    public void CreateDialogueNodeWithOptions()
+    {
+        DialogueNode node = tree.CreateNode(typeof(DialogueNode)) as DialogueNode;
+
+        OptionNode optionStart = new OptionNode("N1", null, "Hello!");
+        OptionNode option0 = new OptionNode("P1", "Hello", "Hello!");
+        OptionNode option1 = new OptionNode("P1", "Bye", "Bye!");
+
+        node.StartNode = optionStart;
+        node.AddMessage(optionStart, option0);
+        node.AddMessage(optionStart, option1);
+
+        CreateNodeView(node);
+
+        AddElement(new OptionNodeView(optionStart));
+        AddElement(new OptionNodeView(option0));
+        AddElement(new OptionNodeView(option1));
     }
     public void CreateStartLineNode()
     {
@@ -221,6 +346,13 @@ public class PlotTreeView : GraphView
             AddElement(new DialogueNodeView(dialogueNode));
         if (node is StartLineNode startLineNode)
             AddElement(new StartLineNodeView(startLineNode));
+
+        Debug.Log(
+            $"Создан View для {node.GetType().Name}\n" +
+            $"guid: {node.guid}\n" +
+            $"position: {node.position} \n" +
+            $"childrens: {(node as DialogueNode)?.ChildNodes.Count}\n"
+            );
     }
 
 }

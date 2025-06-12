@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -27,6 +28,7 @@ namespace Assets.Scripts.ScenarioSystem.Nodes
 
         public OptionNode(string author, string title, string message)
         {
+            guid = System.Guid.NewGuid().ToString();
             Author = author;
             Title = title;
             Message = message;
